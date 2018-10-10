@@ -1,0 +1,37 @@
+<?php
+if (empty($this->coreFieldCategories)):
+    $coreFieldList = [$this->solrDetails()->getCoreFields($this->driver, $this->coreFieldCategories)];
+else:
+    $coreFieldList = [];
+    foreach ($this->coreFieldCategories as $category):
+        $coreFieldList[] = $this->solrDetails()->getCoreFields($this->driver, [$category]);
+    endforeach;
+endif;
+?>
+<?php foreach ($coreFieldList as $coreFields): ?>
+    <?php if (!empty($coreFields)): ?>
+      <table class="table table-striped" summary="<?=$this->transEsc('Bibliographic Details')?>">
+        <?php foreach ($coreFields as $field => $items): ?>
+            <?php if (!empty($items[0])): ?>
+          <tr><th><?=$this->transEsc($field)?>:</th><td>
+                <?php foreach ($items as $item): ?>
+             <p style="margin:0px">
+                 <?php if (is_array($item)): ?>
+                    <?php foreach ($item as $key => $value): ?>
+                        <?php if (!is_int($key)): ?>
+                            <?=$this->transEsc($key) ?>:
+                        <?php endif; ?>
+                        <?=$value['data'] ?><br />
+                        <?php if (!empty($value['originalLetters']) && $value['originalLetters'] != $value['data']): ?>
+                            <?=$this->transEsc('Original Letters') ?>: <?=$value['originalLetters'] ?><br />
+                         <?php endif; ?>
+                    <?php endforeach; ?>
+                 <?php endif; ?>
+             </p>
+                <?php endforeach; ?>
+          </td></tr>
+             <?php endif; ?>
+        <?php endforeach; ?>
+      </table>
+    <?php endif; ?>
+<?php endforeach; ?>
