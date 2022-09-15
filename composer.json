@@ -4,7 +4,7 @@
     "type": "qcovery-module",
     "require": {
         "php": ">=7.3",
-        "qcovery/vufind-composer-installer-plugin": "dev-master"
+        "qcovery/vufind-composer-installer-plugin": "^1.0.0"
     },
     "extra": {
         "moduleName": "RecordDriver"
