@@ -1,0 +1,12 @@
+{
+    "name": "qcovery/record-driver",
+    "description": "Record driver module for VuFind",
+    "type": "qcovery-module",
+    "require": {
+        "php": ">=7.3",
+        "qcovery/vufind-composer-installer-plugin": "*"
+    },
+    "extra": {
+        "moduleName": "RecordDriver"
+    }
+}
