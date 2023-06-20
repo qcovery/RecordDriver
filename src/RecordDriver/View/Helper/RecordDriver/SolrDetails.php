@@ -27,7 +27,7 @@
  */
 namespace RecordDriver\View\Helper\RecordDriver;
 
-use Zend\View\Helper\AbstractHelper;
+use Laminas\View\Helper\AbstractHelper;
 use RecordDriver\RecordDriver\SolrMarc as RecordDriver;
 
 /**

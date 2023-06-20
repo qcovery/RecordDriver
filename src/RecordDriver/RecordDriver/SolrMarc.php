@@ -42,8 +42,8 @@ use VuFind\RecordDriver\SolrDefault;
  */
 class SolrMarc extends SolrDefault
 {
-    use \VuFind\RecordDriver\IlsAwareTrait;
-    use \VuFind\RecordDriver\MarcReaderTrait;
+    use \VuFind\RecordDriver\Feature\IlsAwareTrait;
+    use \VuFind\RecordDriver\Feature\MarcReaderTrait;
 
     /**
      * Configuration (yaml)
@@ -76,11 +76,11 @@ class SolrMarc extends SolrDefault
     /**
      * Constructor
      *
-     * @param \Zend\Config\Config $mainConfig     VuFind main configuration (omit for
+     * @param \Laminas\Config\Config $mainConfig     VuFind main configuration (omit for
      * built-in defaults)
-     * @param \Zend\Config\Config $recordConfig   Record-specific configuration file
+     * @param \Laminas\Config\Config $recordConfig   Record-specific configuration file
      * (omit to use $mainConfig as $recordConfig)
-     * @param \Zend\Config\Config $searchSettings Search-specific configuration file
+     * @param \Laminas\Config\Config $searchSettings Search-specific configuration file
      * @param string $marcYaml
      */
     public function __construct($mainConfig = null, $recordConfig = null,
@@ -249,7 +249,7 @@ class SolrMarc extends SolrDefault
                     }
                 }
             }
-            foreach ($this->getMarcRecord()->getFields($field) as $index => $fieldObject) {
+            foreach ($this->getMarcReader()->getFields($field) as $index => $fieldObject) {
                 $data = $indexData;
                 if (!empty($subFieldSpecs['conditions'])) {
                     foreach ($subFieldSpecs['conditions'] as $condition) {
@@ -345,7 +345,7 @@ class SolrMarc extends SolrDefault
     protected function getOriginalLetters()
     {
         $originalLetters = [];
-        if ($fields = $this->getMarcRecord()->getFields('880')) {
+        if ($fields = $this->getMarcReader()->getFields('880')) {
             foreach ($fields as $field) {
                 $subfields = $field->getSubfields();
                 $letters = [];
@@ -374,7 +374,7 @@ class SolrMarc extends SolrDefault
      */
     public function getBibliographicLevel()
     {
-        $leader = $this->getMarcRecord()->getLeader();
+        $leader = $this->getMarcReader()->getLeader();
         $biblioLevel = strtoupper($leader[7]);
 
         switch ($biblioLevel) {
