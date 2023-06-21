@@ -52,20 +52,4 @@ class SolrDefaultBackendFactory extends \VuFind\Search\Factory\SolrDefaultBacken
     {
         parent::__construct();
     }
-
-    /**
-     * Create the SOLR backend.
-     *
-     * @param Connector $connector Connector
-     *
-     * @return Backend
-     */
-    protected function createBackend(Connector $connector)
-    {
-        $backend = AbstractSolrBackendFactory::createBackend($connector);
-        $manager = $this->serviceLocator->get('RecordDriver\RecordDriver\PluginManager');
-        $factory = new RecordCollectionFactory([$manager, 'getSolrRecord']);
-        $backend->setRecordCollectionFactory($factory);
-        return $backend;
-    }
 }
