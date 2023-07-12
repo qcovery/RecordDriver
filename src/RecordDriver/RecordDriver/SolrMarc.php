@@ -254,11 +254,11 @@ class SolrMarc extends SolrDefault
                 if (!empty($subFieldSpecs['conditions'])) {
                     foreach ($subFieldSpecs['conditions'] as $condition) {
                         if ($condition[0] == 'indicator') {
-                            if ($fieldObject->getIndicator($condition[1]) != $condition[2]) {
+                            if ($fieldObject['i'.$condition[1]] != $condition[2]) { // get indicator
                                 continue 2;
                             }
                         } elseif ($condition[0] == 'field') {
-                            $subField = $fieldObject->getSubfield($condition[1]);
+                            $subField = $fieldObject['subfields'][$condition[1]];
                             if (!is_object($subField) || ($subField->getData() != $condition[2] && $condition[2] != '*')) {
                                 continue 2;
                             }
@@ -291,7 +291,7 @@ class SolrMarc extends SolrDefault
                         $fieldData = [];
                         if (strpos($subfield, 'indicator') !== false) {
                             $indicator = substr($subfield, 9, 1);
-                            $fieldData[] = $fieldObject->getIndicator($indicator);
+                            $fieldData[] = $fieldObject['i'.$indicator];
                         } else {
                             foreach ($fieldObject['subfields'] as $subFieldObject) {
                                 if ($subFieldObject['code'] == $subfield) {

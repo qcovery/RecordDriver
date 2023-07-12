@@ -91,9 +91,11 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
                 }
                 $originalLetters = '';
                 foreach ($solrMarcData[$solrMarcKey] as $data) {
-                    foreach ($data as $date) {
-                        if (isset($date['originalLetters'])) {
-                            $originalLetters .= ' ' . $date['originalLetters'];
+                    if (is_array($data)) {
+                        foreach ($data as $date) {
+                            if (isset($date['originalLetters'])) {
+                                $originalLetters .= ' ' . $date['originalLetters'];
+                            }
                         }
                     }
                 }
@@ -118,6 +120,15 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
                     $templateData[] = $this->makeTemplate($solrMarcData[$solrMarcKey], $key, $separators);
                 } else {
                     foreach ($solrMarcData[$solrMarcKey] as $data) {
+                        if (!is_array($data)) {
+                            $data = [['data' => $data]];
+                        } else {
+                            foreach ($data as $key => $date) {
+                                if (!is_array($date)) {
+                                    $data[$key] = ['data' => $date];
+                                }
+                            }
+                        }
                         $templateData[] = $this->makeText($data);
                     }
                 }
@@ -138,12 +149,12 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
                 if (is_array($resultListDate)) {
                     foreach ($resultListDate as $resultKey => $resultListArray) {
                         if(strpos($resultKey,"_array") !== false) {
-                            if (isset($resultListArray['data'][0])) {
-                                $resultList[$resultKey][] = $resultListArray['data'][0];
+                            if (isset($resultListArray['data'])) {
+                                $resultList[$resultKey][] = $resultListArray['data'];
                             }
                         } else {
-                            if (!isset($resultList[$resultKey]) && isset($resultListArray['data'][0])) {
-                                $resultList[$resultKey] = $resultListArray['data'][0];
+                            if (!isset($resultList[$resultKey]) && isset($resultListArray['data'])) {
+                                $resultList[$resultKey] = $resultListArray['data'];
                             }
                         }
                     }
@@ -280,8 +291,14 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
         $string = '';
         foreach ($data as $key => $date) {
             $translatedData = [];
-            foreach ($date['data'] as $value) {
-                $translatedData[] = $this->view->transEsc($value);
+            if (is_array($date['data'])) {
+                foreach ($date['data'] as $value) {
+                    $translatedData[] = $this->view->transEsc($value);
+                }
+            } else {
+                foreach ($date as $value) {
+                    $translatedData[] = $this->view->transEsc($value);
+                }
             }
             if ($key === 'description') {
                 $string .= ' [' . implode($separator, $translatedData) . ']';
