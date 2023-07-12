@@ -1,6 +1,6 @@
 <?php $resultList = $this->solrDetails()->getResultListLine($this->driver); ?>
       <div>
-        <a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="title getFull" data-view="<?=$this->params->getOptions()->getListViewOption() ?>">
+        <a href="<?=$this->recordLinker()->getUrl($this->driver)?>" class="title getFull" data-view="<?=$this->params->getOptions()->getListViewOption() ?>">
         <?=$resultList['title'] ?>
     <?php if(!empty($resultList['subtitle'])): ?>
         : <?=$resultList['subtitle'] ?>

@@ -293,9 +293,9 @@ class SolrMarc extends SolrDefault
                             $indicator = substr($subfield, 9, 1);
                             $fieldData[] = $fieldObject->getIndicator($indicator);
                         } else {
-                            foreach ($fieldObject->getSubfields() as $subFieldObject) {
-                                if ($subFieldObject->getCode() == $subfield) {
-                                    $fieldData[] = $subFieldObject->getData();
+                            foreach ($fieldObject['subfields'] as $subFieldObject) {
+                                if ($subFieldObject['code'] == $subfield) {
+                                    $fieldData[] = $subFieldObject['data'];
                                 }
                             }
                         }
