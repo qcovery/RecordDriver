@@ -605,9 +605,11 @@ class SolrMarc extends \Findex\RecordDriver\SolrMarc
     {
         $params = parent::getArticleOpenUrlParams();
         $pages = $this->getMarcData('Pages');
-        if (strpos($pages, '-') !== false) {
-            list($spage, $epage) = explode('-', $pages[0]['pages']['data'][0]);
-            $params['rft.epage'] = $epage;
+        foreach ($pages as $page) {
+            if (strpos($page, '-') !== false) {
+                list($spage, $epage) = explode('-', $page[0]['pages']['data'][0]);
+                $params['rft.epage'] = $epage;
+            }
         }
         return $params;
     }
