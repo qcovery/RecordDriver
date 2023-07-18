@@ -40,7 +40,7 @@ use VuFind\RecordDriver\SolrDefault;
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development:plugins:record_drivers Wiki
  */
-class SolrMarc extends SolrDefault
+class SolrMarc extends \Findex\RecordDriver\SolrMarc
 {
     use \VuFind\RecordDriver\Feature\IlsAwareTrait;
     use \VuFind\RecordDriver\Feature\MarcReaderTrait;
