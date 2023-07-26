@@ -130,7 +130,9 @@ class SolrMarc extends SolrDefault
     {
         if (empty($this->solrMarcSpecs)) {
             foreach ($this->solrMarcYamls as $solrMarcYaml) {
-                $this->parseSolrMarcSpecs($solrMarcYaml);
+                if ($solrMarcYaml) {
+                    $this->parseSolrMarcSpecs($solrMarcYaml);
+                }
             }
         }
         $specKeys = array_keys($this->solrMarcSpecs);
@@ -616,5 +618,39 @@ class SolrMarc extends SolrDefault
 
     public function getLibraryHolding () {
         return $this->getMarcReader()->getFields('980');
+    }
+
+    /* Correction for Findex/K10 */
+    /**
+     * Get the short (pre-subtitle) title of the record.
+     *
+     * @return string
+     */
+    public function getShortTitle()
+    {
+        return isset($this->fields['title_short']) ?
+            is_array($this->fields['title_short']) ? $this->fields['title_short'][0] : $this->fields['title_short'] : '';
+    }
+
+    /**
+     * Get the full title of the record.
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        return isset($this->fields['title']) ?
+            is_array($this->fields['title']) ? $this->fields['title'][0] : $this->fields['title'] : '';
+    }
+
+    /**
+     * Get the subtitle of the record.
+     *
+     * @return string
+     */
+    public function getSubtitle()
+    {
+        return isset($this->fields['title_sub']) ?
+            is_array($this->fields['title_sub']) ? $this->fields['title_sub'][0] : $this->fields['title_sub'] : '';
     }
 }
