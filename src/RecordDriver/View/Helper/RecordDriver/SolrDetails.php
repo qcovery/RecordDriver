@@ -101,7 +101,9 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
                 }
                 $templateData = [];
                 if (strpos($viewMethod, '-link') > 0) {
-                    list($key, , $separators) = explode('-', $viewMethod);
+                    $array = explode('-', $viewMethod);
+                    $array[2] = null;
+                    list($key, , $separators) = $array;
                     if (empty($separators)) {
                         $separators = 0;
                     }
@@ -113,7 +115,9 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
                 } elseif ($viewMethod == 'chain') {
                     $templateData = $this->makeChain($solrMarcData[$solrMarcKey]);
                 } elseif (strpos($viewMethod, '-template') > 0) {
-                    list($key, , $separators) = explode('-', $viewMethod);
+                    $array = explode('-', $viewMethod);
+                    $array[2] = null;
+                    list($key, , $separators) = $array;
                     if (empty($separators)) {
                         $separators = 0;
                     }

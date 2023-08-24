@@ -345,31 +345,31 @@ class SolrMarc extends SolrDefault
                         $subFieldList[$subField] = [];
                         if (!empty($specs)) {
                             foreach ($specs as $spec) {
-                                if (isset($spec[0])) {
+                                if (isset($spec[0]) && array_key_exists(0, $spec)) {
                                     if ($spec[0] == 'name') {
-                                            if (!empty($subFieldList[$subField]['name'])) {
-                                                $subFieldList[$subField]['name'] .= '#' . $spec[1];
-                                            } else {
-                                        $subFieldList[$subField]['name'] = $spec[1];
-                                            }
-                                    } elseif ($spec[0] == 'match') {
+                                        if (!empty($subFieldList[$subField]['name'])) {
+                                            $subFieldList[$subField]['name'] .= '#' . $spec[1];
+                                        } else {
+                                            $subFieldList[$subField]['name'] = $spec[1];
+                                        }
+                                    } elseif ($spec[0] == 'match' && array_key_exists(2, $spec)) {
                                         $subFieldList[$subField]['filter'] = $spec[1];
                                         $subFieldList[$subField]['match'] = intval($spec[2]);
-                                    } elseif ($spec[0] == 'replace') {
-                                            if (!isset($subFieldList[$subField]['toReplace'])) {
-                                                $subFieldList[$subField]['toReplace'] = [];
-                                                $subFieldList[$subField]['replacement'] = [];
-                                            }
-                                            $subFieldList[$subField]['toReplace'][] = $spec[1];
-                                            $subFieldList[$subField]['replacement'][] = $spec[2];
-                                    } elseif ($spec[0] == 'function') {
-                                            if (!isset($subFieldList[$subField]['function'])) {
-                                                $subFieldList[$subField]['function'] = [];
-                                                $subFieldList[$subField]['parameter'] = [];
+                                    } elseif ($spec[0] == 'replace' && array_key_exists(2, $spec)) {
+                                        if (!isset($subFieldList[$subField]['toReplace'])) {
+                                            $subFieldList[$subField]['toReplace'] = [];
+                                            $subFieldList[$subField]['replacement'] = [];
+                                        }
+                                        $subFieldList[$subField]['toReplace'][] = $spec[1];
+                                        $subFieldList[$subField]['replacement'][] = $spec[2];
+                                    } elseif ($spec[0] == 'function' && array_key_exists(2, $spec)) {
+                                        if (!isset($subFieldList[$subField]['function'])) {
+                                            $subFieldList[$subField]['function'] = [];
+                                            $subFieldList[$subField]['parameter'] = [];
+                                        }
+                                        $subFieldList[$subField]['function'][] = $spec[1];
+                                        $subFieldList[$subField]['parameter'][] = $spec[2];
                                     }
-                                            $subFieldList[$subField]['function'][] = $spec[1];
-                                            $subFieldList[$subField]['parameter'][] = $spec[2];
-                                }
                             }
                         }
                     }
