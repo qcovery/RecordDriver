@@ -41,8 +41,6 @@ use RecordDriver\View\Helper\Root\AbstractClassBasedTemplateRenderer;
  */
 class SolrDetails extends AbstractClassBasedTemplateRenderer
 {
-
-
     protected $driver;
 
     protected $separatorSet = [
@@ -53,7 +51,7 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
     /**
      * Get the core field entries
      *
-     * @param RecordDriver  $driever               RecordDriver to use
+     * @param RecordDriver  $driver                RecordDriver to use
      * @param array         $categories            Categories to read (see config)
      *
      * @return array
@@ -145,6 +143,11 @@ class SolrDetails extends AbstractClassBasedTemplateRenderer
         return $solrMarcData;
     }
 
+    /**
+     * Get the result list entry.
+     * @param RecordDriver $driver  RecordDriver to use
+     * @return array
+     */
     public function getResultListLine(RecordDriver $driver) {
         $resultList = [];
         $resultListData = $driver->getMarcData('ResultList');
