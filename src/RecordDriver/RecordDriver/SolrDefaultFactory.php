@@ -1,10 +1,10 @@
 <?php
 /**
- * Module Libraries: basic class
+ * Factory for SolrDefault record drivers.
  *
  * PHP version 7
  *
- * Copyright (C) Staats- und Universitätsbibliothek Hamburg 2018.
+ * Copyright (C) Villanova University 2018.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -17,29 +17,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * @category VuFind
- * @package  View_Helpers
- * @author   Hajo Seng <hajo.seng@sub.uni-hamburg.de>
- * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
- * @link     https://github.com/beluga-core
- */
-namespace RecordDriver\View\Helper\RecordDriver;
-
-use Interop\Container\ContainerInterface;
-use Laminas\ServiceManager\Factory\FactoryInterface;
-
-/**
- * SolrDetails helper factory.
- *
- * @category VuFind
- * @package  View_Helpers
- * @author   Hajo Seng <hajo.seng@sub.uni-hamburg.de>
+ * @package  RecordDrivers
+ * @author   Demian Katz <demian.katz@villanova.edu>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development Wiki
  */
-class SolrDetailsFactory implements FactoryInterface
+namespace RecordDriver\RecordDriver;
+
+use Interop\Container\ContainerInterface;
+use VuFind\RecordDriver\AbstractBaseFactory;
+
+/**
+ * Factory for SolrDefault record drivers.
+ *
+ * @category VuFind
+ * @package  RecordDrivers
+ * @author   Demian Katz <demian.katz@villanova.edu>
+ * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ * @link     https://vufind.org/wiki/development Wiki
+ */
+class SolrDefaultFactory extends AbstractBaseFactory
 {
     /**
      * Create an object
@@ -58,9 +58,11 @@ class SolrDetailsFactory implements FactoryInterface
     public function __invoke(ContainerInterface $container, $requestedName,
         array $options = null
     ) {
-        if (!empty($options)) {
-            throw new \Exception('Unexpected options sent to factory.');
-        }
-        return new $requestedName();
+        $searchConfig = $container->get('VuFind\Config\PluginManager')->get('searches');
+        $solrMarcYaml = 'solrmarc.yaml';
+        $finalOptions = [null, $searchConfig, $solrMarcYaml];
+        $driver = parent::__invoke($container, $requestedName, $finalOptions);
+        $driver->attachSearchService($container->get('VuFindSearch\Service'));
+        return $driver;
     }
 }
