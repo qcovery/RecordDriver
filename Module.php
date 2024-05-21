@@ -58,7 +58,7 @@ class Module
     public function getAutoloaderConfig()
     {
         return array(
-#            'Zend\Loader\ClassMapAutoloader' => array(
+#            'Laminas\Loader\ClassMapAutoloader' => array(
 #                'classes' => array(
 #                    'minSO' => __DIR__ . '/src/Beluga/Search/minSO.php'
 #                )
