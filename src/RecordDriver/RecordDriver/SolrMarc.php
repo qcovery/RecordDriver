@@ -42,9 +42,14 @@ use VuFind\RecordDriver\SolrDefault;
  */
 class SolrMarc extends SolrDefault
 {
-    use \VuFind\RecordDriver\Feature\IlsAwareTrait;
+    use \VuFind\RecordDriver\Feature\IlsAwareTrait {
+        \VuFind\RecordDriver\Feature\IlsAwareTrait::getURLs as getIlsURLs;
+    }
     use \VuFind\RecordDriver\Feature\MarcReaderTrait;
-    use \VuFind\RecordDriver\Feature\MarcAdvancedTrait;
+    use \VuFind\RecordDriver\Feature\MarcAdvancedTrait {
+        \VuFind\RecordDriver\Feature\MarcAdvancedTrait::getURLs as getMarcURLs;
+    }
+
 
     /**
      * actual Configuration (yaml)
@@ -654,5 +659,27 @@ class SolrMarc extends SolrDefault
     {
         return isset($this->fields['title_sub']) ?
             is_array($this->fields['title_sub']) ? $this->fields['title_sub'][0] : $this->fields['title_sub'] : '';
+    }
+
+    /**
+     * Return an array of associative URL arrays with one or more of the following
+     * keys:
+     *
+     * <li>
+     *   <ul>desc: URL description text to display (optional)</ul>
+     *   <ul>url: fully-formed URL (required if 'route' is absent)</ul>
+     *   <ul>route: VuFind route to build URL with (required if 'url' is absent)</ul>
+     *   <ul>routeParams: Parameters for route (optional)</ul>
+     *   <ul>queryString: Query params to append after building route (optional)</ul>
+     * </li>
+     *
+     * @return array
+     */
+    public function getURLs()
+    {
+        return array_merge(
+            $this->getMarcURLs(),
+            $this->getIlsURLs()
+        );
     }
 }
