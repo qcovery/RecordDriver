@@ -120,8 +120,10 @@ class SolrMarc extends SolrDefault
     {
         if (empty($this->solrMarcSpecs)) {
             foreach ($this->solrMarcYamls as $solrMarcYaml) {
-                $this->parseSolrMarcSpecs($solrMarcYaml);
-        }
+                if (!empty($solrMarcYaml)) {
+                    $this->parseSolrMarcSpecs($solrMarcYaml);
+                }
+            }
         }
         return $this->solrMarcSpecs[$item] ?? [];
     }
@@ -149,7 +151,7 @@ class SolrMarc extends SolrDefault
             }
                 return $specKeys;
         } else {
-            if (is_array($this->solrMarcKeys[$category])) {
+            if (isset($this->solrMarcKeys[$category]) && is_array($this->solrMarcKeys[$category])) {
                 return array_intersect($this->solrMarcKeys[$category], $specKeys);
             } else {
                 return [];
@@ -175,34 +177,42 @@ class SolrMarc extends SolrDefault
             } else {
                 $category = 'other';
             }
-            if (empty($this->solrMarcKeys[$category])) {
+            if (!isset($this->solrMarcKeys[$category]) || empty($this->solrMarcKeys[$category])) {
                 $this->solrMarcKeys[$category] = [];
             }
             $this->solrMarcKeys[$category][] = $item;
-            if (!empty($solrMarcSpec['originalletters']) && $solrMarcSpec['originalletters'] == 'no') {
-                $solrMarcSpecs[$item]['originalletters'] = 'no';
+            if (isset($solrMarcSpec['originalletters'])) {
+                if ($solrMarcSpec['originalletters'] == 'no') {
+                    $solrMarcSpecs[$item]['originalletters'] = 'no';
+                }
+                unset($solrMarcSpec['originalletters']);
             }
-            unset($solrMarcSpec['originalletters']);
-            if (!empty($solrMarcSpec['mandatory-field'])) {
-                $solrMarcSpecs[$item]['mandatory-field'] = $solrMarcSpec['mandatory-field'];
+            if (isset($solrMarcSpec['mandatory-field'])) {
+                if (!empty($solrMarcSpec['mandatory-field'])) {
+                    $solrMarcSpecs[$item]['mandatory-field'] = $solrMarcSpec['mandatory-field'];
+                }
+                unset($solrMarcSpec['mandatory-field']);
             }
-            unset($solrMarcSpec['mandatory-field']);
             $solrMarcSpecs[$item]['view-method'] = 'default';
-            if (!empty($solrMarcSpec['view-method'])) {
-                $solrMarcSpecs[$item]['view-method'] = $solrMarcSpec['view-method'];
+            if (isset($solrMarcSpec['view-method'])) {
+                if (!empty($solrMarcSpec['view-method'])) {
+                    $solrMarcSpecs[$item]['view-method'] = $solrMarcSpec['view-method'];
+                }
+                unset($solrMarcSpec['view-method']);
             }
-            unset($solrMarcSpec['view-method']);
             $solrMarcSpecs[$item]['match-key'] = '';
-            if (!empty($solrMarcSpec['match-key'])) {
-                $solrMarcSpecs[$item]['match-key'] = $solrMarcSpec['match-key'];
+            if (isset($solrMarcSpec['match-key'])) {
+                if (!empty($solrMarcSpec['match-key'])) {
+                    $solrMarcSpecs[$item]['match-key'] = $solrMarcSpec['match-key'];
+                }
+                unset($solrMarcSpec['match-key']);
             }
-            unset($solrMarcSpec['match-key']);
-            $conditions = $subfields = $parentMethods = $description = [];
+            $conditions = $subfields = $parentMethods = [];
             foreach ($solrMarcSpec as $marcField => $fieldSpec) {
-                if (!empty($fieldSpec)) {
-                    $conditions = $subfields = $parentMethods = $description = [];
+                if (is_iterable($fieldSpec) && !empty($fieldSpec)) {
+                    $conditions = $subfields = $parentMethods = [];
                     foreach ($fieldSpec as $subField => $subFieldSpec) {
-                        if (is_array($subFieldSpec)) {
+                        if (is_iterable($subFieldSpec)) {
                             if ($subField == 'conditions') {
                                 foreach ($subFieldSpec as $spec) {
                                     $conditions[] = $spec;
@@ -211,8 +221,6 @@ class SolrMarc extends SolrDefault
                                 foreach ($subFieldSpec as $spec) {
                                     $parentMethods[] = $spec;
                                 }
-                            } elseif ($subField == 'description') {
-                                $descriptions[] = $subFieldSpec;
                             } elseif ($subField == 'subfields') {
                                 $specs = [];
                                 foreach ($subFieldSpec as $index => $spec) {
@@ -220,8 +228,10 @@ class SolrMarc extends SolrDefault
                                         $specs[] = $spec;
                                     }
                                 }
-                                foreach ($subFieldSpec[0] as $subField) {
-                                    $subfields[$subField] = $specs;
+                                if (isset($subFieldSpec[0]) && is_iterable($subFieldSpec[0])) {
+                                    foreach ($subFieldSpec[0] as $subField) {
+                                        $subfields[$subField] = $specs;
+                                    }
                                 }
                             } else {
                                 foreach ($subFieldSpec as $index => $spec) {
@@ -232,8 +242,8 @@ class SolrMarc extends SolrDefault
                     }
                 }
                 $solrMarcSpecs[$item][$marcField]['conditions'] = $conditions;
-                $solrMarcSpecs[$item][$marcField]['subfields'] = $subfields;
                 $solrMarcSpecs[$item][$marcField]['parent'] = $parentMethods;
+                $solrMarcSpecs[$item][$marcField]['subfields'] = $subfields;
             }
         }
         $this->solrMarcSpecs = $solrMarcSpecs;
@@ -253,66 +263,64 @@ class SolrMarc extends SolrDefault
         if (empty($solrMarcSpecs) && method_exists($this, 'get' . $dataName)) { 
             return call_user_func([$this, 'get' . $dataName]);
         }
-        $title = $solrMarcSpecs['title'] ?? '';
         unset($solrMarcSpecs['title']);
         $mandatoryField = $solrMarcSpecs['mandatory-field'] ?? '';
         unset($solrMarcSpecs['mandatory-field']);
         $mandatoryFieldSet = (empty($mandatoryField));
         if (is_array($solrMarcSpecs)) {
-        foreach ($solrMarcSpecs as $field => $subFieldSpecs) {
-            $indexData = [];
-            if (!empty($subFieldSpecs['parent'])) {
-                $tmpKey = '';
-                $tmpData = [];
-                foreach ($subFieldSpecs['parent'] as $subFieldSpec) {
-                    if ($subFieldSpec[0] == 'method') {
-                        $method = $subFieldSpec[1];
-                        if (is_callable('parent::' . $method)) {
-                            $indexValues = call_user_func([$this, 'parent::' . $method]);
-                            if (is_array($indexValues)) {
-                                foreach ($indexValues as $indexKey => $value) {
+            foreach ($solrMarcSpecs as $field => $subFieldSpecs) {
+                $indexData = [];
+                if (isset($subFieldSpecs['parent']) && is_array($subFieldSpecs['parent'])) {
+                    $tmpKey = '';
+                    $tmpData = [];
+                    foreach ($subFieldSpecs['parent'] as $subFieldSpec) {
+                        if (isset($subFieldSpec[0]) && $subFieldSpec[0] == 'method') {
+                            $method = $subFieldSpec[1] ?? '';
+                            if (is_callable('parent::' . $method)) {
+                                $indexValues = call_user_func([$this, 'parent::' . $method]);
+                                if (is_array($indexValues)) {
+                                    foreach ($indexValues as $indexKey => $value) {
                                         $tmpData[$indexKey] = ['data'=> [$value]];
-                                }
-                            } else {
+                                    }
+                                } else {
                                     $tmpData = $indexValues;
-                            }   
+                                }
+                            }
+                        } elseif (isset($subFieldSpec[0]) && $subFieldSpec[0] == 'name') {
+                            $tmpKey = $subFieldSpec[1] ?? '';
                         }
-                    } elseif ($subFieldSpec[0] == 'name') {
-                        $tmpKey = $subFieldSpec[1];
                     }
-                }
-                if (!empty($tmpData)) {
+                    if (!empty($tmpData)) {
                         if (is_array($tmpData)) {
                             $indexData = [$tmpData];
                         } elseif (!empty($tmpKey)) {
                             $indexData[] = [$tmpKey => ['data' => [$tmpData]]];
-                    } else {
+                        } else {
                             $indexData[] = [['data' => [$tmpData]]];
+                        }
                     }
                 }
-            }
                 foreach ($this->getMarcReader()->getFields($field) as $index => $fieldObject) {
                     $data = $indexData[0] ?? [];
                     $conditionForcedValue = [];
-                if (!empty($subFieldSpecs['conditions'])) {
-                    foreach ($subFieldSpecs['conditions'] as $condition) {
+                    if (isset($subFieldSpecs['conditions']) && is_array($subFieldSpecs['conditions'])) {
+                        foreach ($subFieldSpecs['conditions'] as $condition) {
                             list($type, $key, $val) = $condition;
                             if (is_object($val) && get_class($val) == 'Symfony\Component\Yaml\Tag\TaggedValue') {
                                 $val = $val->getValue();
                             }
-
                             $val = strval($val);
                             if (substr($val, 0, 1) == '!') {
                                 $val = substr($val, 1);
                                 if ($type == 'indicator') {
-                                    $indicator = $fieldObject['i'.$key];
+                                    $indicator = $fieldObject['i'.$key] ?? '';
                                     if (!empty($indicator) && ($val == '*' || preg_match('/'.$val.'/', $indicator))) {
                                         continue 2;
                                     }
-                                } elseif ($type == 'field') {
+                                } elseif ($type == 'field' && isset($fieldObject['subfields']) && is_array($fieldObject['subfields'])) {
                                     foreach ($fieldObject['subfields'] as $subFieldObject) {
-                                        if ($subFieldObject['code'] == $key) {
-                                            if ($val == '*' || preg_match('/'.$val.'/', $subFieldObject['data'])) {
+                                        if (isset($subFieldObject['code']) && $subFieldObject['code'] == $key) {
+                                            if ($val == '*' || preg_match('/'.$val.'/', $subFieldObject['data'] ?? '')) {
                                                 continue 3;
                                             }
                                         }
@@ -320,107 +328,111 @@ class SolrMarc extends SolrDefault
                                 }
                             } else {
                                 if ($type == 'indicator') {
-                                    $indicator = $fieldObject['i'.$key];
-                                    if (!isset($indicator) || $val != '*' && !preg_match('/'.$val.'/', $indicator)) {
-                                continue 2;
-                            }
-                                } elseif ($type == 'field') {
+                                    $indicator = $fieldObject['i'.$key] ?? '';
+                                    if (empty($indicator) || $val != '*' && !preg_match('/'.$val.'/', $indicator)) {
+                                        continue 2;
+                                    }
+                                } elseif ($type == 'field' && isset($fieldObject['subfields']) && is_array($fieldObject['subfields'])) {
                                     $fieldExists = false;
                                     $subfieldCheckPassed = false;
                                     foreach ($fieldObject['subfields'] as $subFieldObject) {
-                                        if ($subFieldObject['code'] == $key) {
+                                        if (isset($subFieldObject['code']) && $subFieldObject['code'] == $key) {
                                             $fieldExists = true;
-                                            if ($val == '*' || preg_match('/'.$val.'/', $subFieldObject['data'])) {
+                                            if ($val == '*' || preg_match('/'.$val.'/', $subFieldObject['data'] ?? '')) {
                                                 $subfieldCheckPassed = true;
-                                                $conditionForcedValue[$key] = $subFieldObject['data'];
+                                                $conditionForcedValue[$key] = $subFieldObject['data'] ?? '';
                                                 break;
                                             }
                                         }
                                     }
                                     if (!$subfieldCheckPassed || !$fieldExists) {
-                                continue 2;
-                            }
-                        }
-                    }
-                }
-                    }
-                if (!empty($subFieldSpecs['subfields'])) {
-                    $subFieldList = [];
-                    foreach ($subFieldSpecs['subfields'] as $subField => $specs) {
-                        $subFieldList[$subField] = [];
-                        if (!empty($specs)) {
-                            foreach ($specs as $spec) {
-                                if (isset($spec[0]) && array_key_exists(0, $spec)) {
-                                    if ($spec[0] == 'name') {
-                                        if (!empty($subFieldList[$subField]['name'])) {
-                                            $subFieldList[$subField]['name'] .= '#' . $spec[1];
-                                        } else {
-                                            $subFieldList[$subField]['name'] = $spec[1];
-                                        }
-                                    } elseif ($spec[0] == 'match' && array_key_exists(2, $spec)) {
-                                        $subFieldList[$subField]['filter'] = $spec[1];
-                                        $subFieldList[$subField]['match'] = intval($spec[2]);
-                                    } elseif ($spec[0] == 'replace' && array_key_exists(2, $spec)) {
-                                        if (!isset($subFieldList[$subField]['toReplace'])) {
-                                            $subFieldList[$subField]['toReplace'] = [];
-                                            $subFieldList[$subField]['replacement'] = [];
-                                        }
-                                        $subFieldList[$subField]['toReplace'][] = $spec[1];
-                                        $subFieldList[$subField]['replacement'][] = $spec[2];
-                                    } elseif ($spec[0] == 'function' && array_key_exists(2, $spec)) {
-                                        if (!isset($subFieldList[$subField]['function'])) {
-                                            $subFieldList[$subField]['function'] = [];
-                                            $subFieldList[$subField]['parameter'] = [];
-                                        }
-                                        $subFieldList[$subField]['function'][] = $spec[1];
-                                        $subFieldList[$subField]['parameter'][] = $spec[2];
+                                        continue 2;
                                     }
+                                }
                             }
                         }
                     }
+                    if (isset($subFieldSpecs['subfields']) && is_array($subFieldSpecs['subfields'])) {
+                        $subFieldList = [];
+                        foreach ($subFieldSpecs['subfields'] as $subField => $specs) {
+                            $subFieldList[$subField] = [];
+                            if (!empty($specs) && is_array($specs)) {
+                                foreach ($specs as $spec) {
+                                    if (isset($spec[0]) && array_key_exists(1, $spec)) {
+                                        if ($spec[0] == 'name') {
+                                            if (isset($subFieldList[$subField]['name']) && !empty($subFieldList[$subField]['name'])) {
+                                                $subFieldList[$subField]['name'] .= '#' . $spec[1];
+                                            } else {
+                                                $subFieldList[$subField]['name'] = $spec[1];
+                                            }
+                                        } elseif ($spec[0] == 'match' && array_key_exists(2, $spec)) {
+                                            $subFieldList[$subField]['filter'] = $spec[1];
+                                            $subFieldList[$subField]['match'] = intval($spec[2]);
+                                        } elseif ($spec[0] == 'replace' && array_key_exists(2, $spec)) {
+                                            if (!isset($subFieldList[$subField]['toReplace'])) {
+                                                $subFieldList[$subField]['toReplace'] = [];
+                                                $subFieldList[$subField]['replacement'] = [];
+                                            }
+                                            $subFieldList[$subField]['toReplace'][] = $spec[1];
+                                            $subFieldList[$subField]['replacement'][] = $spec[2];
+                                        } elseif ($spec[0] == 'function' && array_key_exists(2, $spec)) {
+                                            if (!isset($subFieldList[$subField]['function'])) {
+                                                $subFieldList[$subField]['function'] = [];
+                                                $subFieldList[$subField]['parameter'] = [];
+                                            }
+                                            $subFieldList[$subField]['function'][] = $spec[1];
+                                            $subFieldList[$subField]['parameter'][] = $spec[2];
+                                        }
+                                    }
+                                }
+                            }
                         }
                         $dataIndex = 0;
-                    foreach ($subFieldList as $subfield => $properties) {
-                        $fieldData = [];
-                        if (strpos($subfield, 'indicator') !== false) {
-                            $indicator = substr($subfield, 9, 1);
-                                $fieldData[] = $fieldObject['i'.$indicator];
-                            } else {
+                        foreach ($subFieldList as $subfield => $properties) {
+                            $fieldData = [];
+                            if (strpos($subfield, 'indicator') !== false) {
+                                $indicator = substr($subfield, 9, 1);
+                                $fieldData[] = $fieldObject['i'.$indicator] ?? '';
+                            } elseif (isset($fieldObject['subfields']) && is_array($fieldObject['subfields'])) {
                                 foreach ($fieldObject['subfields'] as $subFieldObject) {
-                                    if ($subFieldObject['code'] == $subfield) {
-                                        if (!empty($conditionForcedValue[$subfield])) {
+                                    if (isset($subFieldObject['code']) && $subFieldObject['code'] == $subfield) {
+                                        if (isset($conditionForcedValue[$subfield]) && isset($subFieldObject['data'])) {
                                             if ($subFieldObject['data'] == $conditionForcedValue[$subfield]) {
                                                 $fieldData[] = $conditionForcedValue[$subfield];
                                             }
-                        } else {
+                                        } else {
                                             $fieldData[] = $subFieldObject['data'];
                                         }
-                                }
-                            }
-                        }
-                        if (!empty($fieldData)) {
-                                foreach ($fieldData as $fieldDate) {
-                                if (isset($properties['filter']) && isset($properties['match'])) {
-                                    if (preg_match('/'.$properties['filter'].'/', $fieldDate, $matches)) {
-                                        $fieldDate = $matches[$properties['match']];
-                                        } else {
-                                            $fieldDate = '';
                                     }
                                 }
-                                if (isset($properties['function'])) {
-                                        for ($i = 0; $i < count($properties['function']); $i++) {
-                                            $function = $properties['function'][$i];
-                                            if (!empty($properties['parameter'][$i])) {
-                                                $fieldDate = $function($fieldDate, $properties['parameter'][$i]);
-                                                #$fieldDate = $function($fieldDate, MB_CASE_TITLE);
+                            }
+                            if (!empty($fieldData)) {
+                                foreach ($fieldData as $fieldDate) {
+                                    if (isset($properties['filter']) && isset($properties['match'])) {
+                                        if (preg_match('/'.$properties['filter'].'/', $fieldDate, $matches)) {
+                                            $fieldDate = $matches[$properties['match']];
                                             } else {
-                                    $fieldDate = $function($fieldDate);
-                                }
+                                                $fieldDate = '';
+                                        }
+                                    }
+                                    if (isset($properties['function'])) {
+                                        for ($i = 0; $i < count($properties['function']); $i++) {
+                                            $function = $properties['function'][$i] ?? '';
+                                            if (is_callable($function)) {
+                                                if (isset($properties['parameter'][$i]) && !empty($properties['parameter'][$i])) {
+                                                    $fieldDate = $function($fieldDate, $properties['parameter'][$i]);
+                                                    #$fieldDate = $function($fieldDate, MB_CASE_TITLE);
+                                                } else {
+                                                    $fieldDate = $function($fieldDate);
+                                                }
+                                            }
                                         }
                                     }
                                     if (isset($properties['toReplace']) && isset($properties['replacement'])) {
                                         for ($i = 0; $i < count($properties['toReplace']); $i++) {
-                                            $fieldDate = preg_replace('/' . $properties['toReplace'][$i] . '/', $properties['replacement'][$i], $fieldDate);
+                                            if (isset($properties['toReplace'][$i]) && isset($properties['replacement'][$i])) {
+                                                $fieldDate = preg_replace('/' . $properties['toReplace'][$i] . '/', $properties['replacement'][$i], $fieldDate);
+                                            }
                                         }
                                     }
                                     $fieldDate = trim($fieldDate);
@@ -434,32 +446,31 @@ class SolrMarc extends SolrDefault
                                             $data[$name]['data'] = [];
                                         }
                                         $data[$name]['data'][] = $fieldDate;
-                                if (empty($solrMarcSpecs['originalletters']) || $solrMarcSpecs['originalletters'] != 'no') {
-                                    if (!empty($this->originalLetters[$field][$index][$subfield])) {
-                                        $data[$name]['originalLetters'] = $this->originalLetters[$field][$index][$subfield];
-                                    }
-                                }
+                                        if (!isset($solrMarcSpecs['originalletters']) || $solrMarcSpecs['originalletters'] != 'no') {
+                                            if (isset($this->originalLetters[$field][$index][$subfield])) {
+                                                $data[$name]['originalLetters'] = $this->originalLetters[$field][$index][$subfield];
+                                            }
+                                        }
                                         if ($name == $mandatoryField) {
                                             $mandatoryFieldSet = true;
                                         }
                                     }
+                                }
                             }
                         }
-
+                    }
+                    if (!empty($data)) {
+                        $returnData[] = $data;
                     }
                 }
-                    if (!empty($data)) {
-                $returnData[] = $data;
-            }
+                if (empty($returnData)) {
+                    $returnData = $indexData;
                 }
-            if (empty($returnData)) {
-                $returnData = $indexData;
             }
-        }
         }
         if (!empty($returnData)) {
-            $returnData['view-method'] = $solrMarcSpecs['view-method'];
-            $returnData['match-key'] = $solrMarcSpecs['match-key'];
+            $returnData['view-method'] = $solrMarcSpecs['view-method'] ?? '';
+            $returnData['match-key'] = $solrMarcSpecs['match-key'] ?? '';
         }
         if (!$mandatoryFieldSet) {
             return [];
@@ -477,18 +488,18 @@ class SolrMarc extends SolrDefault
         $originalLetters = [];
         if ($fields = $this->getMarcReader()->getFields('880')) {
             foreach ($fields as $field) {
-                $subfields = $field['subfields'];
+                $subfields = $field['subfields'] ?? [];
                 $letters = [];
                 foreach ($subfields as $subfield) {
-                    $code = $subfield['code'];
+                    $code = $subfield['code'] ?? '';
                     if ($code == '6') {
-                        $index = preg_replace('/-.*$/', '', $subfield['data']);
+                        $index = preg_replace('/-.*$/', '', $subfield['data'] ?? '');
                     } elseif(!is_numeric($code)) {
-                        $letters[$code] = $subfield['data'];
+                        $letters[$code] = $subfield['data'] ?? '';
                     }
                 }
                 if (isset($originalLetters[$index])) {
-                    $originalLetters[$index][] .= $letters;
+                    $originalLetters[$index][] = $letters;
                 } else {
                     $originalLetters[$index] = [$letters];
                 }
@@ -505,7 +516,7 @@ class SolrMarc extends SolrDefault
     public function getBibliographicLevel()
     {
         $leader = $this->getMarcReader()->getLeader();
-        $biblioLevel = strtoupper($leader[7]);
+        $biblioLevel = strtoupper($leader[7] ?? '');
 
         switch ($biblioLevel) {
         case 'M': // Monograph
@@ -533,7 +544,7 @@ class SolrMarc extends SolrDefault
     public function getMultipartResourceRecordLevel()
     {
         $leader = $this->getMarcReader()->getLeader();
-        $mrrLevel = strtoupper($leader[19]);
+        $mrrLevel = strtoupper($leader[19] ?? '');
 
         switch ($mrrLevel) {
             case 'A': // Set
@@ -545,48 +556,6 @@ class SolrMarc extends SolrDefault
             default:
                 return "Unknown";
         }
-    }
-
-    /**
-     * Return an XML representation of the record using the specified format.
-     * Return false if the format is unsupported.
-     *
-     * @param string     $format     Name of format to use (corresponds with OAI-PMH
-     * metadataPrefix parameter).
-     * @param string     $baseUrl    Base URL of host containing VuFind (optional;
-     * may be used to inject record URLs into XML when appropriate).
-     * @param RecordLink $recordLink Record link helper (optional; may be used to
-     * inject record URLs into XML when appropriate).
-     *
-     * @return mixed         XML, or false if format unsupported.
-     */
-    public function getXML($format, $baseUrl = null, $recordLink = null)
-    {
-        // Special case for MARC:
-        if ($format == 'marc21') {
-            $xml = $this->getMarcReader()->toXML();
-            $xml = str_replace(
-                [chr(27), chr(28), chr(29), chr(30), chr(31)], ' ', $xml
-            );
-            $xml = simplexml_load_string($xml);
-            if (!$xml || !isset($xml->record)) {
-                return false;
-            }
-
-            // Set up proper namespacing and extract just the <record> tag:
-            $xml->record->addAttribute('xmlns', "http://www.loc.gov/MARC21/slim");
-            $xml->record->addAttribute(
-                'xsi:schemaLocation',
-                'http://www.loc.gov/MARC21/slim ' .
-                'http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd',
-                'http://www.w3.org/2001/XMLSchema-instance'
-            );
-            $xml->record->addAttribute('type', 'Bibliographic');
-            return $xml->record->asXML();
-        }
-
-        // Try the parent method:
-        return parent::getXML($format, $baseUrl, $recordLink);
     }
 
     /**
@@ -613,10 +582,9 @@ class SolrMarc extends SolrDefault
         $params = parent::getArticleOpenUrlParams();
         $pages = $this->getMarcData('Pages');
         foreach ($pages as $page) {
-            if (is_array($page) && array_key_exists('pages', $page)
-                && is_array($page['pages']) && array_key_exists('data', $page['pages'])
+            if (isset($page['pages']['data'][0])
                 && str_contains($page['pages']['data'][0], '-')) {
-                list($spage, $epage) = explode('-', $page['pages']['data'][0]);
+                list(, $epage) = explode('-', $page['pages']['data'][0]);
                 $params['rft.epage'] = $epage;
             }
         }
