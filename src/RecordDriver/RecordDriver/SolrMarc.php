@@ -27,6 +27,7 @@
  */
 namespace RecordDriver\RecordDriver;
 
+use VuFind\Service\GetServiceTrait;
 use VuFind\XSLT\Processor as XSLTProcessor;
 use VuFind\Config\SearchSpecsReader;
 use VuFind\RecordDriver\SolrDefault;
@@ -42,6 +43,7 @@ use VuFind\RecordDriver\SolrDefault;
  */
 class SolrMarc extends SolrDefault
 {
+    use GetServiceTrait;
     use \VuFind\RecordDriver\Feature\IlsAwareTrait {
         \VuFind\RecordDriver\Feature\IlsAwareTrait::getURLs as getIlsURLs;
     }
@@ -80,6 +82,13 @@ class SolrMarc extends SolrDefault
     protected $solrMarcKeys;
 
     /**
+     * Search specs reader.
+     *
+     * @var SearchSpecsReader
+     */
+    protected $searchSpecsReader;
+
+    /**
      * Constructor
      *
      * @param \Laminas\Config\Config $mainConfig     VuFind main configuration (omit for
@@ -88,10 +97,13 @@ class SolrMarc extends SolrDefault
      * (omit to use $mainConfig as $recordConfig)
      * @param \Laminas\Config\Config $searchSettings Search-specific configuration file
      * @param string $marcYaml
+     * @param SearchSpecsReader $searchSpecsReader Search specs reader
      */
     public function __construct($mainConfig = null, $recordConfig = null,
-        $searchSettings = null, $solrMarcYaml = null
+        $searchSettings = null, $solrMarcYaml = null,
+        ?SearchSpecsReader $searchSpecsReader = null
     ) {
+        $this->searchSpecsReader = $searchSpecsReader;
         $this->addSolrMarcYaml($solrMarcYaml, false);
         parent::__construct($mainConfig, $recordConfig, $searchSettings);
     }
@@ -163,8 +175,7 @@ class SolrMarc extends SolrDefault
      * @return null
      */
     protected function parseSolrMarcSpecs($solrMarcYaml) {
-        $specsReader = new SearchSpecsReader();
-        $rawSolrMarcSpecs = $specsReader->get($solrMarcYaml);
+        $rawSolrMarcSpecs = $this->searchSpecsReader->get($solrMarcYaml);
         $solrMarcSpecs = $this->solrMarcSpecs;
 
         foreach ($rawSolrMarcSpecs as $item => $solrMarcSpec) {

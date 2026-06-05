@@ -51,27 +51,6 @@ class Module
     }
 
     /**
-     * Get autoloader configuration
-     *
-     * @return array
-     */
-    public function getAutoloaderConfig()
-    {
-        return array(
-#            'Laminas\Loader\ClassMapAutoloader' => array(
-#                'classes' => array(
-#                    'minSO' => __DIR__ . '/src/Beluga/Search/minSO.php'
-#                )
-#            ),
-            'Laminas\Loader\StandardAutoloader' => array(
-                'namespaces' => array(
-                    __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
-                ),
-            ),
-        );
-    }
-
-    /**
      * Initialize the module
      *
      * @param ModuleManager $m Module manager

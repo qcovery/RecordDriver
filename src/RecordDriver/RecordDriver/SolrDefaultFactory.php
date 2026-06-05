@@ -28,6 +28,7 @@
 namespace RecordDriver\RecordDriver;
 
 use Interop\Container\ContainerInterface;
+use VuFind\Config\SearchSpecsReader;
 use VuFind\RecordDriver\AbstractBaseFactory;
 
 /**
@@ -60,7 +61,12 @@ class SolrDefaultFactory extends AbstractBaseFactory
     ) {
         $searchConfig = $container->get('VuFind\Config\PluginManager')->get('searches');
         $solrMarcYaml = 'solrmarc.yaml';
-        $finalOptions = [null, $searchConfig, $solrMarcYaml];
+        $finalOptions = [
+            null,
+            $searchConfig,
+            $solrMarcYaml,
+            $container->get(SearchSpecsReader::class),
+        ];
         $driver = parent::__invoke($container, $requestedName, $finalOptions);
         $driver->attachSearchService($container->get('VuFindSearch\Service'));
         return $driver;
