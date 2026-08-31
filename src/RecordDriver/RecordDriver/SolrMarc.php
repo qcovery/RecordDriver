@@ -740,32 +740,8 @@ class SolrMarc extends SolrDefault
     }
 
     /**
-     * prepare solr data and transfer to ajaxhandler to prevent further solr requests
-     *
-     * @return string
-     */
-    public function formatSolrData() {
-        $rawData = $this->getRawData();
-        /**
-         * redurce data to bare minimum
-         * add fields that are used in functions of VuFind that you use
-         * e. g. isCollection() needs some hierarchy fields
-         */
-        $data = [
-            'fullrecord' => $rawData['fullrecord'] ?? null,
-            'format' => $rawData['format'] ?? null,
-            'title' => $rawData['title'] ?? null,
-            'title_short' => $rawData['title_short'] ?? null,
-            'title_sub' => $rawData['title_sub'] ?? null
-        ];
-        $formattedData = base64_encode(json_encode($data));
-
-        return $formattedData;
-    }
-
-    /**
-     * displays a list of all solr fields added in
-     * formatSolrData for better debug
+     * Displays a list of all solr fields added in
+     * formatSolrData for better debugging.
      */
     public function getAvailableSolrFields() {
         return array_keys($this->fields);
